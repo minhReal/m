@@ -4,173 +4,60 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TWD → VND | Tỷ giá Đài Loan</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@300;400;600&display=swap');
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:        #0b0f1a;
-      --surface:   #111827;
-      --border:    #1e2d40;
-      --line:      #00c9a7;
-      --line-glow: rgba(0,201,167,0.18);
-      --avg:       #f59e0b;
-      --up:        #34d399;
-      --down:      #f87171;
-      --text:      #e2e8f0;
-      --muted:     #64748b;
-      --accent:    #00c9a7;
+      --bg: #0b0f1a; --surface: #111827; --border: #1e2d40;
+      --line: #00c9a7; --avg: #f59e0b;
+      --up: #34d399; --down: #f87171;
+      --text: #e2e8f0; --muted: #64748b; --accent: #00c9a7;
     }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+    header { padding: 24px 32px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
+    .pair-label { font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: .12em; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+    .rate-now { font-family: 'IBM Plex Mono', monospace; font-size: clamp(32px, 5vw, 56px); font-weight: 600; line-height: 1; }
+    .rate-unit { color: var(--accent); font-size: .5em; margin-left: 6px; }
+    .delta-badge { display: inline-flex; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; padding: 3px 10px; border-radius: 4px; margin-left: 10px; vertical-align: middle; }
+    .up   { background: rgba(52,211,153,.15); color: var(--up); }
+    .down { background: rgba(248,113,113,.15); color: var(--down); }
+    .flat { background: rgba(100,116,139,.15); color: var(--muted); }
+    .header-meta { margin-left: auto; text-align: right; }
+    .header-meta p { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+    .header-meta strong { color: var(--text); font-size: 13px; }
 
-    /* ── HEADER ── */
-    header {
-      padding: 28px 32px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: flex-end;
-      gap: 24px;
-      flex-wrap: wrap;
-    }
-    .pair-label {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 13px;
-      letter-spacing: .12em;
-      color: var(--muted);
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-    .rate-now {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: clamp(36px, 6vw, 60px);
-      font-weight: 600;
-      color: var(--text);
-      line-height: 1;
-    }
-    .rate-now span { color: var(--accent); font-size: .55em; margin-left: 6px; }
-    .delta-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 14px;
-      font-weight: 600;
-      padding: 4px 12px;
-      border-radius: 4px;
-      margin-left: 10px;
-      vertical-align: middle;
-    }
-    .delta-badge.up   { background: rgba(52,211,153,.15); color: var(--up); }
-    .delta-badge.down { background: rgba(248,113,113,.15); color: var(--down); }
-    .delta-badge.flat { background: rgba(100,116,139,.15); color: var(--muted); }
+    .stats-row { display: flex; gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .stat-cell { flex: 1; min-width: 100px; background: var(--surface); padding: 12px 18px; }
+    .stat-cell .lbl { font-size: 10px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 4px; }
+    .stat-cell .val { font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600; }
 
-    .header-meta {
-      margin-left: auto;
-      text-align: right;
-    }
-    .header-meta p { font-size: 12px; color: var(--muted); margin-bottom: 3px; }
-    .header-meta strong { color: var(--text); font-weight: 600; }
+    main { flex: 1; padding: 24px 32px; }
+    .controls { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+    .range-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); font-family: 'IBM Plex Mono', monospace; font-size: 12px; padding: 5px 12px; border-radius: 4px; cursor: pointer; transition: all .15s; }
+    .range-btn:hover, .range-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,201,167,.08); }
 
-    /* ── STATS ROW ── */
-    .stats-row {
-      display: flex;
-      gap: 1px;
-      background: var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-    .stat-cell {
-      flex: 1;
-      background: var(--surface);
-      padding: 14px 20px;
-      min-width: 110px;
-    }
-    .stat-cell .label { font-size: 11px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 5px; }
-    .stat-cell .val   { font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 600; }
+    .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 16px 14px; position: relative; }
+    .chart-container { position: relative; height: 320px; }
 
-    /* ── MAIN ── */
-    main { flex: 1; padding: 28px 32px; }
+    #status { text-align: center; padding: 60px 0; font-size: 13px; color: var(--muted); }
+    .status-hidden { display: none; }
 
-    .controls {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .controls label { font-size: 12px; color: var(--muted); margin-right: 4px; }
-    .range-btn {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--muted);
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 12px;
-      padding: 6px 14px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: all .18s;
-    }
-    .range-btn:hover, .range-btn.active {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: rgba(0,201,167,.08);
-    }
+    .info-bar { margin-top: 10px; font-size: 11px; color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; }
+    .info-bar span { display: flex; align-items: center; gap: 5px; }
+    .dot-green { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display: inline-block; }
+    .dot-amber { width: 20px; height: 2px; background: var(--avg); border-radius: 1px; display: inline-block; }
 
-    .chart-wrap {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 24px 20px 16px;
-      position: relative;
-    }
-
-    .avg-legend {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 14px;
-    }
-    .avg-legend span { display: inline-block; width: 28px; height: 2px; background: var(--avg); border-radius: 1px; }
-
-    /* ── LOADING / ERROR ── */
-    #status {
-      text-align: center;
-      padding: 60px 0;
-      font-size: 14px;
-      color: var(--muted);
-      display: none;
-    }
-    #status.show { display: block; }
-
-    /* ── FOOTER ── */
-    footer {
-      padding: 16px 32px;
-      border-top: 1px solid var(--border);
-      font-size: 11px;
-      color: var(--muted);
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+    footer { padding: 14px 32px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
     footer a { color: var(--accent); text-decoration: none; }
 
+    .toast { position: fixed; bottom: 24px; right: 24px; background: #1e2d40; border: 1px solid var(--border); color: var(--text); font-size: 12px; padding: 10px 16px; border-radius: 6px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 99; }
+    .toast.show { opacity: 1; }
+
     @media (max-width: 600px) {
-      header, main, footer { padding-left: 16px; padding-right: 16px; }
+      header, main, footer { padding-left: 14px; padding-right: 14px; }
       .header-meta { margin-left: 0; text-align: left; width: 100%; }
-      .stat-cell .val { font-size: 14px; }
     }
   </style>
 </head>
@@ -180,7 +67,7 @@
   <div>
     <div class="pair-label">TWD / VND &nbsp;·&nbsp; Đài Loan Tân Đài Tệ → Việt Nam Đồng</div>
     <div>
-      <span class="rate-now" id="rateNow">—<span>VND</span></span>
+      <span class="rate-now" id="rateNow">—<span class="rate-unit">VND</span></span>
       <span class="delta-badge flat" id="deltaBadge">—</span>
     </div>
   </div>
@@ -191,299 +78,292 @@
 </header>
 
 <div class="stats-row">
-  <div class="stat-cell">
-    <div class="label">Cao nhất (kỳ)</div>
-    <div class="val" id="statHigh">—</div>
-  </div>
-  <div class="stat-cell">
-    <div class="label">Thấp nhất (kỳ)</div>
-    <div class="val" id="statLow">—</div>
-  </div>
-  <div class="stat-cell">
-    <div class="label">Trung bình</div>
-    <div class="val" id="statAvg">—</div>
-  </div>
-  <div class="stat-cell">
-    <div class="label">Thay đổi (%)</div>
-    <div class="val" id="statChange">—</div>
-  </div>
-  <div class="stat-cell">
-    <div class="label">1000 TWD =</div>
-    <div class="val" id="stat1k">—</div>
-  </div>
+  <div class="stat-cell"><div class="lbl">Cao nhất (kỳ)</div><div class="val" id="sHigh">—</div></div>
+  <div class="stat-cell"><div class="lbl">Thấp nhất (kỳ)</div><div class="val" id="sLow">—</div></div>
+  <div class="stat-cell"><div class="lbl">Trung bình</div><div class="val" id="sAvg">—</div></div>
+  <div class="stat-cell"><div class="lbl">Thay đổi (%)</div><div class="val" id="sChange">—</div></div>
+  <div class="stat-cell"><div class="lbl">1.000 TWD =</div><div class="val" id="s1k">—</div></div>
 </div>
 
 <main>
   <div class="controls">
-    <span style="font-size:12px;color:var(--muted)">Kỳ:</span>
+    <span style="font-size:11px;color:var(--muted)">Kỳ:</span>
     <button class="range-btn" data-days="7">7N</button>
     <button class="range-btn active" data-days="30">1T</button>
     <button class="range-btn" data-days="90">3T</button>
     <button class="range-btn" data-days="180">6T</button>
-    <button class="range-btn" data-days="365">1 Năm</button>
   </div>
 
   <div class="chart-wrap">
-    <div id="status" class="show">⏳ Đang tải dữ liệu...</div>
-    <canvas id="rateChart" height="320" style="display:none"></canvas>
-    <div class="avg-legend"><span></span> Đường trung bình</div>
+    <div id="status">⏳ Đang tải dữ liệu...</div>
+    <div class="chart-container status-hidden" id="chartContainer">
+      <canvas id="rateChart"></canvas>
+    </div>
+    <div class="info-bar">
+      <span><i class="dot-green"></i> Tỷ giá TWD/VND</span>
+      <span><i class="dot-amber"></i> Trung bình kỳ</span>
+      <span id="dataInfo" style="margin-left:auto"></span>
+    </div>
   </div>
 </main>
 
 <footer>
-  <span>Nguồn dữ liệu: <a href="https://open.er-api.com" target="_blank">Open Exchange Rates (er-api.com)</a> — Cập nhật mỗi 24h</span>
+  <span>Nguồn: <a href="https://open.er-api.com" target="_blank">Open ExchangeRate API</a> · Lịch sử lưu tại trình duyệt · Tự cập nhật mỗi 1 giờ</span>
   <span id="footerRate"></span>
 </footer>
 
+<div class="toast" id="toast"></div>
+
 <script>
-  // ── CONFIG ──────────────────────────────────────────────────
-  // API miễn phí, không cần key, rate giới hạn 1500 req/tháng
-  const API_LATEST  = 'https://open.er-api.com/v6/latest/TWD';
-  // Lịch sử dùng ExchangeRate-API free historical (USD base, tính chéo)
-  // Hoặc dùng ExchangeRate.host (miễn phí, có lịch sử)
-  const HIST_API = (date) =>
-    `https://api.exchangerate.host/historical?base=TWD&symbols=VND&date=${date}`;
-  // Fallback: nếu không có CORS, dùng ExchangeRate-API historical endpoint
-  // ────────────────────────────────────────────────────────────
+// ── UTILS ───────────────────────────────────────────
+const fmt   = n => n ? Math.round(n).toLocaleString('vi-VN') : '—';
+const today = () => new Date().toISOString().slice(0, 10);
+const STORE_KEY = 'twd_vnd_history_v2';
 
-  let chart = null;
-  let currentDays = 30;
-  let latestRate = null;
+function showToast(msg, ms = 3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), ms);
+}
 
-  // Định dạng số VND
-  const fmt = (n) => n ? Math.round(n).toLocaleString('vi-VN') : '—';
-  const fmtFull = (n) => n ? Math.round(n).toLocaleString('vi-VN') + ' ₫' : '—';
+// ── STORAGE: lưu lịch sử tỷ giá vào localStorage ───
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
 
-  // Tạo array ngày (YYYY-MM-DD)
-  function getDates(days) {
-    const dates = [];
-    const now = new Date();
-    for (let i = days; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      dates.push(d.toISOString().slice(0, 10));
+function saveHistory(history) {
+  try {
+    // Giữ tối đa 400 ngày
+    const keys = Object.keys(history).sort();
+    if (keys.length > 400) {
+      keys.slice(0, keys.length - 400).forEach(k => delete history[k]);
     }
-    return dates;
-  }
+    localStorage.setItem(STORE_KEY, JSON.stringify(history));
+  } catch(e) { console.warn('LocalStorage đầy:', e); }
+}
 
-  // Lấy tỷ giá mới nhất
-  async function fetchLatest() {
-    const res = await fetch(API_LATEST);
-    const json = await res.json();
-    if (json.result === 'success' && json.rates?.VND) {
-      return json.rates.VND;
+// ── API: lấy tỷ giá hiện tại ────────────────────────
+async function fetchLatestRate() {
+  // Dùng open.er-api.com — miễn phí, CORS OK, không cần key
+  const res  = await fetch('https://open.er-api.com/v6/latest/TWD');
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  if (json.result !== 'success') throw new Error('API lỗi');
+  const vnd = json.rates?.VND;
+  if (!vnd) throw new Error('Không có VND trong response');
+  return { rate: vnd, date: today() };
+}
+
+// ── LẤY + MERGE LỊCH SỬ ────────────────────────────
+async function getHistory(days) {
+  const history = loadHistory();
+  let changed   = false;
+
+  // Luôn cập nhật ngày hôm nay
+  try {
+    const { rate, date } = await fetchLatestRate();
+    if (!history[date] || Math.abs(history[date] - rate) > 0.01) {
+      history[date] = rate;
+      changed = true;
     }
-    throw new Error('Không lấy được tỷ giá hiện tại');
+    if (changed) saveHistory(history);
+  } catch (err) {
+    console.error('Không lấy được rate mới nhất:', err);
   }
 
-  // Lấy lịch sử tỷ giá dùng ExchangeRate.host
-  async function fetchHistory(days) {
-    const dates = getDates(days);
-    // Dùng timeseries endpoint của exchangerate.host
-    const start = dates[0];
-    const end   = dates[dates.length - 1];
-    const url = `https://api.exchangerate.host/timeseries?base=TWD&symbols=VND&start_date=${start}&end_date=${end}`;
-    const res = await fetch(url);
-    const json = await res.json();
+  // Lọc theo kỳ đã chọn
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
 
-    if (json.success && json.rates) {
-      const result = [];
-      const sortedDates = Object.keys(json.rates).sort();
-      for (const d of sortedDates) {
-        const rate = json.rates[d]?.VND;
-        if (rate) result.push({ date: d, rate });
-      }
-      return result;
-    }
-    // Fallback: trả về mảng rỗng để dùng latest
-    return [];
+  const points = Object.entries(history)
+    .filter(([d]) => d >= cutoffStr)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, rate]) => ({ date, rate }));
+
+  return points;
+}
+
+// ── UI ──────────────────────────────────────────────
+let chart = null;
+
+function setStatus(msg) {
+  const el = document.getElementById('status');
+  const cc = document.getElementById('chartContainer');
+  if (msg) {
+    el.textContent = msg;
+    el.classList.remove('status-hidden');
+    cc.classList.add('status-hidden');
+  } else {
+    el.classList.add('status-hidden');
+    cc.classList.remove('status-hidden');
   }
+}
 
-  // Cập nhật header stats
-  function updateStats(data, latest) {
-    const rates = data.map(d => d.rate);
-    const high  = Math.max(...rates);
-    const low   = Math.min(...rates);
-    const avg   = rates.reduce((a, b) => a + b, 0) / rates.length;
-    const first = rates[0];
-    const changePct = ((latest - first) / first * 100).toFixed(2);
-    const isUp = latest >= first;
+function updateHeader(points) {
+  if (!points.length) return;
+  const rates  = points.map(p => p.rate);
+  const latest = rates[rates.length - 1];
+  const first  = rates[0];
+  const high   = Math.max(...rates);
+  const low    = Math.min(...rates);
+  const avg    = rates.reduce((a, b) => a + b, 0) / rates.length;
+  const pct    = ((latest - first) / first * 100).toFixed(2);
+  const isUp   = latest >= first;
 
-    document.getElementById('rateNow').childNodes[0].textContent = fmt(latest);
-    document.getElementById('statHigh').textContent   = fmt(high);
-    document.getElementById('statLow').textContent    = fmt(low);
-    document.getElementById('statAvg').textContent    = fmt(avg);
-    document.getElementById('stat1k').textContent     = fmt(latest * 1000) + ' ₫';
-    document.getElementById('footerRate').textContent = `1 TWD = ${fmt(latest)} VND`;
+  document.getElementById('rateNow').childNodes[0].textContent = fmt(latest);
+  document.getElementById('sHigh').textContent   = fmt(high);
+  document.getElementById('sLow').textContent    = fmt(low);
+  document.getElementById('sAvg').textContent    = fmt(avg);
+  document.getElementById('s1k').textContent     = fmt(latest * 1000) + ' ₫';
+  document.getElementById('footerRate').textContent = `1 TWD = ${fmt(latest)} VND`;
 
-    const changeEl = document.getElementById('statChange');
-    changeEl.textContent = (isUp ? '+' : '') + changePct + '%';
-    changeEl.style.color = isUp ? 'var(--up)' : (changePct == 0 ? 'var(--muted)' : 'var(--down)');
+  const chg = document.getElementById('sChange');
+  chg.textContent = (isUp ? '+' : '') + pct + '%';
+  chg.style.color = isUp ? 'var(--up)' : pct == 0 ? 'var(--muted)' : 'var(--down)';
 
-    const badge = document.getElementById('deltaBadge');
-    badge.textContent = (isUp ? '▲ +' : '▼ ') + changePct + '%';
-    badge.className = 'delta-badge ' + (isUp ? 'up' : (changePct == 0 ? 'flat' : 'down'));
+  const badge = document.getElementById('deltaBadge');
+  badge.textContent = (isUp ? '▲ +' : '▼ ') + pct + '%';
+  badge.className = 'delta-badge ' + (isUp ? 'up' : pct == 0 ? 'flat' : 'down');
 
-    const now = new Date();
-    document.getElementById('updateTime').textContent =
-      now.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) + ' ' +
-      now.toLocaleDateString('vi-VN');
-  }
+  const now = new Date();
+  document.getElementById('updateTime').textContent =
+    now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' +
+    now.toLocaleDateString('vi-VN');
 
-  // Vẽ / cập nhật biểu đồ
-  function drawChart(data, avg) {
-    const labels = data.map(d => {
-      const [y, m, day] = d.date.split('-');
-      return `${day}/${m}`;
-    });
-    const rates  = data.map(d => d.rate);
-    const avgLine = data.map(() => avg);
+  document.getElementById('dataInfo').textContent =
+    `${points.length} điểm dữ liệu · ${points[0].date} → ${points[points.length-1].date}`;
+}
 
-    const gradient = document.getElementById('rateChart')
-      .getContext('2d')
-      .createLinearGradient(0, 0, 0, 320);
-    gradient.addColorStop(0,   'rgba(0,201,167,0.25)');
-    gradient.addColorStop(1,   'rgba(0,201,167,0.00)');
-
-    const cfg = {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [
-          {
-            label: 'TWD/VND',
-            data: rates,
-            borderColor: '#00c9a7',
-            borderWidth: 2.5,
-            pointRadius: data.length > 60 ? 0 : 3,
-            pointHoverRadius: 5,
-            pointBackgroundColor: '#00c9a7',
-            fill: true,
-            backgroundColor: gradient,
-            tension: 0.35,
-          },
-          {
-            label: 'Trung bình',
-            data: avgLine,
-            borderColor: '#f59e0b',
-            borderWidth: 1.5,
-            borderDash: [6, 4],
-            pointRadius: 0,
-            fill: false,
-            tension: 0,
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: '#1e2d40',
-            titleColor: '#94a3b8',
-            bodyColor: '#e2e8f0',
-            borderColor: '#334155',
-            borderWidth: 1,
-            padding: 12,
-            callbacks: {
-              label: ctx => {
-                if (ctx.datasetIndex === 0) return `  ${fmt(ctx.parsed.y)} VND`;
-                return `  TB: ${fmt(ctx.parsed.y)} VND`;
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            grid: { color: 'rgba(30,45,64,0.8)' },
-            ticks: {
-              color: '#475569',
-              font: { family: 'IBM Plex Mono', size: 11 },
-              maxTicksLimit: 10,
-            }
-          },
-          y: {
-            position: 'right',
-            grid: { color: 'rgba(30,45,64,0.8)' },
-            ticks: {
-              color: '#475569',
-              font: { family: 'IBM Plex Mono', size: 11 },
-              callback: v => fmt(v),
-            }
-          }
-        }
-      }
-    };
-
-    if (chart) {
-      chart.data = cfg.data;
-      chart.options = cfg.options;
-      chart.update();
-    } else {
-      const canvas = document.getElementById('rateChart');
-      canvas.style.height = '320px';
-      chart = new Chart(canvas, cfg);
-    }
-  }
-
-  // Load dữ liệu + render
-  async function load(days) {
-    const status = document.getElementById('status');
-    const canvas = document.getElementById('rateChart');
-    status.className = 'show';
-    status.textContent = '⏳ Đang tải dữ liệu...';
-    canvas.style.display = 'none';
-
-    try {
-      const [history, latest] = await Promise.all([
-        fetchHistory(days),
-        fetchLatest()
-      ]);
-
-      latestRate = latest;
-
-      let data = history;
-      // Nếu không có lịch sử, tạo dummy point cho hôm nay
-      if (!data.length) {
-        const today = new Date().toISOString().slice(0, 10);
-        data = [{ date: today, rate: latest }];
-      }
-
-      // Đảm bảo điểm cuối là latest
-      const today = new Date().toISOString().slice(0, 10);
-      if (data[data.length - 1]?.date !== today) {
-        data.push({ date: today, rate: latest });
-      }
-
-      const avg = data.reduce((s, d) => s + d.rate, 0) / data.length;
-      updateStats(data, latest);
-      drawChart(data, avg);
-
-      status.className = '';
-      canvas.style.display = 'block';
-    } catch (err) {
-      status.textContent = '❌ Không tải được dữ liệu. Kiểm tra kết nối mạng.';
-      console.error(err);
-    }
-  }
-
-  // Range buttons
-  document.querySelectorAll('.range-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentDays = parseInt(btn.dataset.days);
-      load(currentDays);
-    });
+function drawChart(points) {
+  const avg   = points.reduce((s, p) => s + p.rate, 0) / points.length;
+  const rates = points.map(p => p.rate);
+  const labels = points.map(p => {
+    const [, m, d] = p.date.split('-');
+    return `${d}/${m}`;
   });
 
-  // Khởi động
-  load(currentDays);
+  const ctx = document.getElementById('rateChart').getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, 300);
+  grad.addColorStop(0, 'rgba(0,201,167,0.22)');
+  grad.addColorStop(1, 'rgba(0,201,167,0.00)');
 
-  // Tự cập nhật mỗi 30 phút
-  setInterval(() => load(currentDays), 30 * 60 * 1000);
+  const data = {
+    labels,
+    datasets: [
+      {
+        label: 'TWD/VND',
+        data: rates,
+        borderColor: '#00c9a7',
+        borderWidth: 2.5,
+        pointRadius: points.length > 60 ? 0 : 3,
+        pointHoverRadius: 5,
+        pointBackgroundColor: '#00c9a7',
+        fill: true,
+        backgroundColor: grad,
+        tension: 0.35,
+      },
+      {
+        label: 'Trung bình',
+        data: points.map(() => avg),
+        borderColor: '#f59e0b',
+        borderWidth: 1.5,
+        borderDash: [6, 4],
+        pointRadius: 0,
+        fill: false,
+      }
+    ]
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1e2d40',
+        titleColor: '#94a3b8',
+        bodyColor: '#e2e8f0',
+        borderColor: '#334155',
+        borderWidth: 1,
+        padding: 10,
+        callbacks: {
+          label: ctx => ctx.datasetIndex === 0
+            ? `  ${fmt(ctx.parsed.y)} VND`
+            : `  TB: ${fmt(ctx.parsed.y)} VND`
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: 'rgba(30,45,64,0.9)' },
+        ticks: { color: '#475569', font: { family: 'IBM Plex Mono', size: 10 }, maxTicksLimit: 10 }
+      },
+      y: {
+        position: 'right',
+        grid: { color: 'rgba(30,45,64,0.9)' },
+        ticks: { color: '#475569', font: { family: 'IBM Plex Mono', size: 10 }, callback: v => fmt(v) }
+      }
+    }
+  };
+
+  if (chart) {
+    chart.data    = data;
+    chart.options = options;
+    chart.update();
+  } else {
+    chart = new Chart(ctx, { type: 'line', data, options });
+  }
+}
+
+// ── MAIN LOAD ───────────────────────────────────────
+async function load(days) {
+  setStatus('⏳ Đang tải dữ liệu...');
+  try {
+    const points = await getHistory(days);
+
+    if (!points.length) {
+      setStatus('❌ Chưa có dữ liệu. Kiểm tra kết nối mạng rồi tải lại trang.');
+      return;
+    }
+
+    updateHeader(points);
+    drawChart(points);
+    setStatus(null);
+
+    if (points.length < 5) {
+      showToast(`ℹ️ Mới có ${points.length} ngày dữ liệu. Biểu đồ sẽ đầy dần theo thời gian.`);
+    }
+  } catch (err) {
+    setStatus('❌ Không tải được dữ liệu. Kiểm tra mạng rồi thử lại.');
+    console.error(err);
+  }
+}
+
+// ── RANGE BUTTONS ───────────────────────────────────
+let currentDays = 30;
+document.querySelectorAll('.range-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentDays = parseInt(btn.dataset.days);
+    load(currentDays);
+  });
+});
+
+// ── KHỞI ĐỘNG ───────────────────────────────────────
+load(currentDays);
+
+// Tự reload mỗi 1 giờ
+setInterval(() => {
+  showToast('🔄 Đang cập nhật tỷ giá...');
+  load(currentDays);
+}, 60 * 60 * 1000);
 </script>
 </body>
 </html>
